@@ -50,7 +50,7 @@ export type Submission = {
 export type TerminalEntry = {
   id: string
   message: string
-  level: 'info' | 'success' | 'error'
+  level: 'info' | 'success' | 'error' | 'command'
 }
 
 export type AppData = {
@@ -58,4 +58,13 @@ export type AppData = {
   labs: Lab[]
   teacherAssignments: TeacherAssignment[]
   submissions: Submission[]
+}
+
+export type ProjectFile = {
+  id: string
+  name: string
+  content: string
+  type: 'file' | 'folder'
+  path: string
+  isReadonly?: boolean
 }

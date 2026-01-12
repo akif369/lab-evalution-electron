@@ -59,7 +59,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="layout">
       <aside className="sidebar">
         <div className="sidebar-header">
-          <h2>Lab Evaluation</h2>
+          <h2>Lab Eval</h2>
           <p className="user-role">{currentUser.role.toUpperCase()}</p>
         </div>
         <nav className="sidebar-nav">
@@ -68,6 +68,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               key={item.path}
               to={item.path}
               className={`nav-item ${isActive(item.path) ? 'active' : ''}`}
+              title={item.label}
             >
               <span className="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -79,8 +80,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <strong>{currentUser.name}</strong>
             <span className="muted">{currentUser.id}</span>
           </div>
-          <button onClick={handleLogout} className="logout-btn">
-            Logout
+          <button onClick={handleLogout} className="logout-btn" title="Logout">
+            <span className="logout-icon">🚪</span>
+            <span className="logout-text">Logout</span>
           </button>
         </div>
       </aside>

@@ -1,5 +1,7 @@
 .dashboard-page {
   padding: 2rem;
+  background: #0d1117;
+  min-height: 100vh;
 }
 
 .page-header {
