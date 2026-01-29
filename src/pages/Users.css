@@ -1,0 +1,165 @@
+.users-page {
+  padding: 2rem;
+}
+
+.users-page .page-header h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 2rem;
+}
+
+.panel {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 1.5rem;
+  border: 1px solid #333;
+  margin-top: 1.5rem;
+}
+
+.panel h2 {
+  margin: 0 0 1rem 0;
+  color: #fff;
+  font-size: 1.25rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  align-items: end;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.bulk-textarea {
+  padding: 0.75rem;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.bulk-textarea:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.form-group.disabled {
+  opacity: 0.6;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  padding: 0.75rem 1rem;
+  background: #4a9eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  background: #357abd;
+}
+
+.btn-danger {
+  padding: 0.5rem 0.8rem;
+  background: #c72e2e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-danger:hover {
+  background: #e74c3c;
+}
+
+.bulk-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.bulk-textarea {
+  width: 100%;
+  resize: vertical;
+}
+
+.users-table {
+  overflow: auto;
+}
+
+.users-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table th,
+.users-table td {
+  padding: 0.75rem 0.75rem;
+  border-bottom: 1px solid #2a2a2a;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.users-table th {
+  color: #e0e0e0;
+  font-weight: 600;
+  background: #252526;
+}
+
+.users-table td input,
+.users-table td select {
+  width: 100%;
+  padding: 0.55rem 0.6rem;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+}
+
+.users-table td input:focus,
+.users-table td select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.users-table td.actions {
+  text-align: right;
+}
+
+.muted {
+  color: #858585;
+}
+
+.small {
+  font-size: 0.85rem;
+}
+
+.mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+}

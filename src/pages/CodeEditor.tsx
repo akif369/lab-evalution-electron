@@ -274,6 +274,8 @@ export function CodeEditor() {
       })
     }
 
+    const submissionFiles = files.filter((f) => f.type === 'file')
+
     setData((prev) => {
       const existing = prev.submissions.find(
         (s) => s.studentId === currentUser.id && s.experimentId === selectedExperiment.id,
@@ -290,20 +292,30 @@ export function CodeEditor() {
                 }
               : s,
           ),
+          submissionFiles: {
+            ...prev.submissionFiles,
+            [existing.id]: submissionFiles,
+          },
         }
       }
+
+      const newId = uid('sub')
       return {
         ...prev,
         submissions: [
           ...prev.submissions,
           {
-            id: uid('sub'),
+            id: newId,
             studentId: currentUser.id,
             experimentId: selectedExperiment.id,
             status: isSubmit ? 'submitted' : 'draft',
             lastSaved: nowStamp(),
           },
         ],
+        submissionFiles: {
+          ...prev.submissionFiles,
+          [newId]: submissionFiles,
+        },
       }
     })
 

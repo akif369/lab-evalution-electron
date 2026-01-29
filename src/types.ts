@@ -7,6 +7,9 @@ export type User = {
   password: string
   courseIds?: string[]
   labIds?: string[]
+  year?: string
+  semester?: string
+  section?: string
 }
 
 export type Course = {
@@ -44,6 +47,7 @@ export type Submission = {
   experimentId: string
   status: 'draft' | 'submitted' | 'validated'
   score?: number
+  feedback?: string
   lastSaved: string
 }
 
@@ -54,10 +58,12 @@ export type TerminalEntry = {
 }
 
 export type AppData = {
+  users: User[]
   courses: Course[]
   labs: Lab[]
   teacherAssignments: TeacherAssignment[]
   submissions: Submission[]
+  submissionFiles: Record<string, ProjectFile[]>
 }
 
 export type ProjectFile = {

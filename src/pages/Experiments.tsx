@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import './Experiments.css'
 
 export function Experiments() {
   const { currentUser, data } = useApp()
+  const { setData } = useApp()
+  const navigate = useNavigate()
   const [selectedLabId, setSelectedLabId] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState('')
 
@@ -45,6 +47,31 @@ export function Experiments() {
       (s) => s.studentId === currentUser.id && s.experimentId === expId,
     )
     return sub?.status || null
+  }
+
+  const handleDeleteExperiment = (labIdToDeleteFrom: string, experimentId: string, title: string) => {
+    if (currentUser.role !== 'teacher') return
+    const ok = confirm(`Delete experiment ${title}? This will remove related submissions.`)
+    if (!ok) return
+
+    setData((prev) => {
+      const submissionsToDelete = prev.submissions.filter((s) => s.experimentId === experimentId)
+      const nextSubmissionFiles = { ...prev.submissionFiles }
+      for (const s of submissionsToDelete) {
+        delete nextSubmissionFiles[s.id]
+      }
+
+      return {
+        ...prev,
+        labs: prev.labs.map((l) =>
+          l.id === labIdToDeleteFrom
+            ? { ...l, experiments: l.experiments.filter((e) => e.id !== experimentId) }
+            : l,
+        ),
+        submissions: prev.submissions.filter((s) => s.experimentId !== experimentId),
+        submissionFiles: nextSubmissionFiles,
+      }
+    })
   }
 
   return (
@@ -122,6 +149,22 @@ export function Experiments() {
                       >
                         {currentUser.role === 'student' ? 'Start Coding' : 'View Details'}
                       </Link>
+                      {currentUser.role === 'teacher' && (
+                        <div className="teacher-actions">
+                          <button
+                            className="btn-secondary"
+                            onClick={() => navigate(`/edit-experiment/${selectedLab.id}/${exp.id}`)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            className="btn-danger"
+                            onClick={() => handleDeleteExperiment(selectedLab.id, exp.id, exp.title)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )

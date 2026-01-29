@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { users, uid } from '../data'
+import { uid } from '../data'
 import './Assignments.css'
 
 export function Assignments() {
@@ -11,18 +11,21 @@ export function Assignments() {
 
   if (!currentUser || currentUser.role !== 'hod') return null
 
-  const teachers = data.teacherAssignments
-    .map((a) => a.teacherId)
-    .filter((id, idx, arr) => arr.indexOf(id) === idx)
-    .map((id) => {
-      const user = users.find((u) => u.id === id)
-      return user ? { id: user.id, name: user.name } : null
-    })
-    .filter(Boolean) as Array<{ id: string; name: string }>
+  const teachers = data.users
+    .filter((u) => u.role === 'teacher')
+    .map((u) => ({ id: u.id, name: u.name }))
 
   const handleAssign = () => {
     if (!teacherId || !courseId || !labId) {
       alert('Please select all fields')
+      return
+    }
+
+    const alreadyAssigned = data.teacherAssignments.some(
+      (a) => a.teacherId === teacherId && a.courseId === courseId && a.labId === labId,
+    )
+    if (alreadyAssigned) {
+      alert('This assignment already exists')
       return
     }
 
@@ -32,12 +35,59 @@ export function Assignments() {
         ...prev.teacherAssignments,
         { id: uid('assign'), teacherId, courseId, labId },
       ],
+      users: prev.users.map((u) => {
+        if (u.id !== teacherId) return u
+        const nextCourseIds = new Set(u.courseIds || [])
+        nextCourseIds.add(courseId)
+        const nextLabIds = new Set(u.labIds || [])
+        nextLabIds.add(labId)
+        return {
+          ...u,
+          courseIds: Array.from(nextCourseIds),
+          labIds: Array.from(nextLabIds),
+        }
+      }),
     }))
 
     alert('Assignment created!')
     setTeacherId('')
     setCourseId('')
     setLabId('')
+  }
+
+  const handleDeleteAssignment = (assignmentId: string) => {
+    const assignment = data.teacherAssignments.find((a) => a.id === assignmentId)
+    if (!assignment) return
+    const ok = confirm('Delete this assignment?')
+    if (!ok) return
+
+    setData((prev) => {
+      const nextAssignments = prev.teacherAssignments.filter((a) => a.id !== assignmentId)
+      const teacherAssignmentsForTeacher = nextAssignments.filter(
+        (a) => a.teacherId === assignment.teacherId,
+      )
+
+      const nextUsers = prev.users.map((u) => {
+        if (u.id !== assignment.teacherId) return u
+        const nextLabIds = teacherAssignmentsForTeacher
+          .map((a) => a.labId)
+          .filter((id, idx, arr) => arr.indexOf(id) === idx)
+        const nextCourseIds = teacherAssignmentsForTeacher
+          .map((a) => a.courseId)
+          .filter((id, idx, arr) => arr.indexOf(id) === idx)
+        return {
+          ...u,
+          labIds: nextLabIds,
+          courseIds: nextCourseIds,
+        }
+      })
+
+      return {
+        ...prev,
+        teacherAssignments: nextAssignments,
+        users: nextUsers,
+      }
+    })
   }
 
   return (
@@ -94,7 +144,7 @@ export function Assignments() {
         <h2>Current Assignments</h2>
         <div className="assignments-grid">
           {data.teacherAssignments.map((assign) => {
-            const teacher = users.find((u) => u.id === assign.teacherId)
+            const teacher = data.users.find((u) => u.id === assign.teacherId)
             const course = data.courses.find((c) => c.id === assign.courseId)
             const lab = data.labs.find((l) => l.id === assign.labId)
             return (
@@ -109,6 +159,14 @@ export function Assignments() {
                   <div className="detail-item">
                     <strong>Lab:</strong> {lab?.title || assign.labId}
                   </div>
+                </div>
+                <div className="assignment-actions">
+                  <button
+                    className="btn-secondary"
+                    onClick={() => handleDeleteAssignment(assign.id)}
+                  >
+                    Delete
+                  </button>
                 </div>
               </div>
             )

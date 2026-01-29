@@ -1,0 +1,105 @@
+.submissions-page {
+  padding: 2rem;
+}
+
+.submissions-page .page-header h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 2rem;
+}
+
+.submissions-page .filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  align-items: end;
+  margin: 1.5rem 0;
+}
+
+.submissions-page .filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.submissions-page .filter-group label {
+  color: #e0e0e0;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.submissions-page select {
+  padding: 0.75rem;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.submissions-page select:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.submissions-table {
+  background: #1e1e1e;
+  border-radius: 8px;
+  border: 1px solid #333;
+  overflow: hidden;
+}
+
+.submissions-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.submissions-table th,
+.submissions-table td {
+  padding: 0.9rem 1rem;
+  border-bottom: 1px solid #2a2a2a;
+  text-align: left;
+}
+
+.submissions-table th {
+  color: #e0e0e0;
+  font-weight: 600;
+  background: #252526;
+}
+
+.submissions-table td {
+  color: #cccccc;
+}
+
+.submissions-table td.actions {
+  text-align: right;
+}
+
+.btn-primary {
+  padding: 0.5rem 0.9rem;
+  background: #4a9eff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 0.9rem;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.btn-primary:hover {
+  background: #357abd;
+}
+
+.empty-state {
+  padding: 2rem;
+}
+
+.muted {
+  color: #858585;
+}
+
+.small {
+  font-size: 0.85rem;
+}

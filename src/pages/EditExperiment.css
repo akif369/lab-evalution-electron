@@ -1,0 +1,152 @@
+.edit-experiment-page {
+  padding: 2rem;
+}
+
+.edit-experiment-page .page-header {
+  margin-bottom: 2rem;
+}
+
+.edit-experiment-page .page-header h1 {
+  margin: 0;
+  color: #fff;
+  font-size: 2rem;
+}
+
+.experiment-form {
+  max-width: 900px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-section label {
+  color: #e0e0e0;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.required {
+  color: #f44336;
+}
+
+.form-section input,
+.form-section textarea {
+  padding: 0.75rem;
+  background: #1e1e1e;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.form-section input:focus,
+.form-section textarea:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.hints-container,
+.links-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hint-item,
+.link-item {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.hint-item input,
+.link-item input {
+  flex: 1;
+}
+
+.remove-btn {
+  padding: 0.5rem 1rem;
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.remove-btn:hover {
+  background: #b71c1c;
+}
+
+.add-btn {
+  padding: 0.5rem 1rem;
+  background: #333;
+  color: #e0e0e0;
+  border: 1px solid #444;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  align-self: flex-start;
+}
+
+.add-btn:hover {
+  background: #444;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn-primary {
+  background: #4a9eff;
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background: #357abd;
+}
+
+.btn-secondary {
+  background: #333;
+  color: #e0e0e0;
+}
+
+.btn-secondary:hover {
+  background: #444;
+}
+
+.btn-danger {
+  background: #c72e2e;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #e74c3c;
+}
+
+.muted {
+  color: #888;
+  font-size: 0.9rem;
+}

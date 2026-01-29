@@ -119,6 +119,26 @@
   gap: 0.5rem;
 }
 
+.teacher-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-danger {
+  padding: 0.6rem 1rem;
+  background: #c72e2e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-danger:hover {
+  background: #e74c3c;
+}
+
 .assignment-item {
   padding: 0.5rem;
   background: #252525;

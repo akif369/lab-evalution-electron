@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { users } from '../data'
 import type { UserRole } from '../types'
 import './Login.css'
 
@@ -10,14 +9,14 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<UserRole>('student')
   const [error, setError] = useState<string | null>(null)
-  const { setCurrentUser } = useApp()
+  const { setCurrentUser, data } = useApp()
   const navigate = useNavigate()
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
 
-    const found = users.find(
+    const found = data.users.find(
       (u) =>
         u.id.toLowerCase() === id.toLowerCase() &&
         u.password === password &&

@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
-import { users, uid } from '../data'
+import { uid } from '../data'
 import type { User } from '../types'
 import './Teachers.css'
 
 export function Teachers() {
-  const { currentUser, data } = useApp()
+  const { currentUser, data, setData } = useApp()
   const [newTeacherName, setNewTeacherName] = useState('')
 
   if (!currentUser || currentUser.role !== 'hod') return null
 
-  const teacherList = users.filter((u) => u.role === 'teacher')
+  const teacherList = data.users.filter((u) => u.role === 'teacher')
 
   const addTeacher = () => {
     if (!newTeacherName.trim()) return
@@ -24,9 +24,29 @@ export function Teachers() {
       labIds: [],
     }
 
-    users.push(newTeacher)
+    setData((prev) => ({
+      ...prev,
+      users: [...prev.users, newTeacher],
+    }))
     setNewTeacherName('')
     alert(`Teacher ${newTeacherName} added! Default password: teacher`)
+  }
+
+  const deleteTeacher = (teacherId: string) => {
+    const teacher = data.users.find((u) => u.id === teacherId && u.role === 'teacher')
+    if (!teacher) return
+    const ok = confirm(`Delete teacher ${teacher.name} (${teacher.id})? This will remove assignments.`)
+    if (!ok) return
+
+    setData((prev) => {
+      const nextAssignments = prev.teacherAssignments.filter((a) => a.teacherId !== teacherId)
+
+      return {
+        ...prev,
+        users: prev.users.filter((u) => u.id !== teacherId),
+        teacherAssignments: nextAssignments,
+      }
+    })
   }
 
   return (
@@ -80,6 +100,11 @@ export function Teachers() {
                     })}
                   </div>
                 )}
+                <div className="teacher-actions">
+                  <button className="btn-danger" onClick={() => deleteTeacher(teacher.id)}>
+                    Delete Teacher
+                  </button>
+                </div>
               </div>
             </div>
           )
