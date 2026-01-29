@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { FileCode2, FileText, FileJson, File as FileIcon } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { uid, nowStamp } from '../data'
 import { FileExplorer } from '../components/FileExplorer'
@@ -385,22 +386,24 @@ export function CodeEditor() {
   )
 }
 
-function getFileIcon(fileName: string): string {
+function getFileIcon(fileName: string): JSX.Element {
   const ext = fileName.split('.').pop()?.toLowerCase()
-  const iconMap: Record<string, string> = {
-    js: '📜',
-    ts: '📘',
-    jsx: '⚛️',
-    tsx: '⚛️',
-    py: '🐍',
-    java: '☕',
-    cpp: '⚙️',
-    c: '⚙️',
-    html: '🌐',
-    css: '🎨',
-    json: '📋',
-    md: '📝',
-    txt: '📄',
+
+  switch (ext) {
+    case 'js':
+    case 'ts':
+    case 'jsx':
+    case 'tsx':
+    case 'c':
+    case 'cpp':
+    case 'java':
+      return <FileCode2 size={16} />
+    case 'json':
+      return <FileJson size={16} />
+    case 'md':
+    case 'txt':
+      return <FileText size={16} />
+    default:
+      return <FileIcon size={16} />
   }
-  return iconMap[ext || ''] || '📄'
 }

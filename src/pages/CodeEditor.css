@@ -299,3 +299,57 @@
 .small {
   font-size: 0.85rem;
 }
+
+@media (max-width: 1024px) {
+  .editor-layout {
+    flex-direction: column;
+  }
+
+  .editor-left-panel {
+    width: 100%;
+    flex-direction: row;
+    height: 260px;
+  }
+
+  .info-sidebar {
+    max-height: none;
+    flex: 1.2;
+    border-bottom: none;
+    border-right: 1px solid #3e3e42;
+  }
+
+  .file-explorer-panel {
+    flex: 1;
+  }
+
+  .terminal-panel {
+    height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .editor-left-panel {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .info-sidebar {
+    border-right: none;
+    border-bottom: 1px solid #3e3e42;
+  }
+
+  .editor-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .editor-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .terminal-panel {
+    height: 200px;
+  }
+}
