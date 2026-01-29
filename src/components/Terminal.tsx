@@ -24,6 +24,11 @@ export function Terminal({ files, onExecute, entries, onRealExecute }: TerminalP
     }
   }, [entries])
 
+  // Keep input focused when terminal mounts
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [])
+
   // Check if command tries to edit files
   const isFileEditCommand = (cmd: string): boolean => {
     const lowerCmd = cmd.toLowerCase()
@@ -71,6 +76,22 @@ export function Terminal({ files, onExecute, entries, onRealExecute }: TerminalP
       onExecute(
         'ERROR: File editing/deletion is disabled. Files are read-only in terminal.\n' +
           'Please use the code editor to modify files.',
+      )
+      setIsExecuting(false)
+      return
+    }
+
+    // Built-in help
+    if (trimmedCmd === 'help') {
+      onExecute(
+        [
+          'Available commands:',
+          '- clear / cls : clear the terminal output',
+          '- help       : show this help',
+          '- Any compile/run commands like `node main.js`, `python main.py`, `gcc main.c`',
+          '',
+          'Note: File editing and deletion commands are blocked. Use the code editor to change files.',
+        ].join('\n'),
       )
       setIsExecuting(false)
       return
@@ -138,11 +159,19 @@ export function Terminal({ files, onExecute, entries, onRealExecute }: TerminalP
         onExecute('^C')
         setIsExecuting(false)
       }
+    } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+      // Block paste into terminal to reduce cheating
+      e.preventDefault()
     }
   }
 
   return (
-    <div className="terminal-container">
+    <div
+      className="terminal-container"
+      onClick={() => {
+        inputRef.current?.focus()
+      }}
+    >
       <div className="terminal-tabs">
         <div className="terminal-tab active">
           <span className="terminal-tab-icon">▸</span>
@@ -176,7 +205,6 @@ export function Terminal({ files, onExecute, entries, onRealExecute }: TerminalP
               onKeyDown={handleKeyDown}
               className="terminal-input"
               placeholder=""
-              disabled={isExecuting}
               autoFocus
             />
           </div>
