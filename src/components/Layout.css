@@ -126,17 +126,6 @@
   opacity: 1;
 }
 
-.nav-item span:first-of-type {
-  opacity: 0;
-  transition: opacity 0.2s;
-  min-width: 20px;
-  text-align: center;
-}
-
-.sidebar:hover .nav-item span:first-of-type {
-  opacity: 1;
-}
-
 .nav-icon {
   font-size: 1.2rem;
   width: 20px;
