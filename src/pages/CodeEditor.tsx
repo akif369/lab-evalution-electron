@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, type JSX } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FileCode2, FileText, FileJson, File as FileIcon } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -114,6 +114,26 @@ export function CodeEditor() {
   const handleFileDelete = (fileId: string) => {
     const file = files.find((f) => f.id === fileId)
     if (file) {
+      if (file.type === 'folder') {
+        const folderPath = file.path
+        setFiles((prev) =>
+          prev.filter(
+            (f) => f.id !== fileId && !(f.path === folderPath || f.path.startsWith(folderPath + '/')),
+          ),
+        )
+        if (activeFile && (activeFile.path === folderPath || activeFile.path.startsWith(folderPath + '/'))) {
+          const remaining = files.filter(
+            (f) =>
+              f.type === 'file' &&
+              f.id !== fileId &&
+              !(f.path === folderPath || f.path.startsWith(folderPath + '/')),
+          )
+          setActiveFileId(remaining.length > 0 ? remaining[0].id : null)
+        }
+        appendTerminal(`Deleted folder: ${file.name}`, 'info')
+        return
+      }
+
       setFiles((prev) => prev.filter((f) => f.id !== fileId))
       if (activeFileId === fileId) {
         const remaining = files.filter((f) => f.id !== fileId && f.type === 'file')
@@ -133,6 +153,43 @@ export function CodeEditor() {
     }
     setFiles((prev) => [...prev, newFolder])
     appendTerminal(`Created folder: ${name}`, 'success')
+  }
+
+  const handleItemRename = (fileId: string, newName: string) => {
+    const item = files.find((f) => f.id === fileId)
+    if (!item) return
+
+    setFiles((prev) => {
+      const existing = prev.find((f) => f.path === newName || f.path.endsWith('/' + newName))
+      if (existing && existing.id !== fileId) {
+        appendTerminal(`Rename failed: ${newName} already exists`, 'error')
+        return prev
+      }
+
+      if (item.type === 'file') {
+        const parts = item.path.split('/')
+        parts[parts.length - 1] = newName
+        const nextPath = parts.join('/')
+        return prev.map((f) => (f.id === fileId ? { ...f, name: newName, path: nextPath } : f))
+      }
+
+      const oldPath = item.path
+      const oldPrefix = oldPath + '/'
+      const parentParts = oldPath.split('/').slice(0, -1)
+      const nextPath = [...parentParts, newName].join('/')
+      const nextPrefix = nextPath + '/'
+
+      return prev.map((f) => {
+        if (f.id === fileId) return { ...f, name: newName, path: nextPath }
+        if (f.path === oldPath) return f
+        if (f.path.startsWith(oldPrefix)) {
+          return { ...f, path: nextPrefix + f.path.slice(oldPrefix.length) }
+        }
+        return f
+      })
+    })
+
+    appendTerminal(`Renamed: ${item.name} → ${newName}`, 'success')
   }
 
   const updateFileContent = (fileId: string, content: string) => {
@@ -321,6 +378,7 @@ export function CodeEditor() {
               onFileCreate={handleFileCreate}
               onFileDelete={handleFileDelete}
               onFolderCreate={handleFolderCreate}
+              onItemRename={handleItemRename}
             />
           </div>
         </div>

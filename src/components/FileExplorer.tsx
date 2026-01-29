@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type JSX } from 'react'
 import { File, FileCode2, FileJson, FileText, Folder, FolderOpen, Search } from 'lucide-react'
 import type { ProjectFile } from '../types'
 import './FileExplorer.css'
@@ -10,6 +10,7 @@ interface FileExplorerProps {
   onFileCreate: (name: string) => void
   onFileDelete: (fileId: string) => void
   onFolderCreate: (name: string) => void
+  onItemRename: (fileId: string, newName: string) => void
 }
 
 export function FileExplorer({
@@ -19,6 +20,7 @@ export function FileExplorer({
   onFileCreate,
   onFileDelete,
   onFolderCreate,
+  onItemRename,
 }: FileExplorerProps) {
   const [showCreateFile, setShowCreateFile] = useState(false)
   const [showCreateFolder, setShowCreateFolder] = useState(false)
@@ -26,6 +28,18 @@ export function FileExplorer({
   const [newFolderName, setNewFolderName] = useState('')
   const [search, setSearch] = useState('')
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set())
+  const [renamingId, setRenamingId] = useState<string | null>(null)
+  const [renameValue, setRenameValue] = useState('')
+
+  const restoreFocus = (previousActive: Element | null) => {
+    setTimeout(() => {
+      window.focus()
+      const el = previousActive as HTMLElement | null
+      if (el && typeof el.focus === 'function' && document.contains(el)) {
+        el.focus()
+      }
+    }, 0)
+  }
 
   const filteredFiles = useMemo(
     () =>
@@ -54,26 +68,57 @@ export function FileExplorer({
     })
   }
 
+  const cancelCreateFile = () => {
+    setNewFileName('')
+    setShowCreateFile(false)
+  }
+
+  const cancelCreateFolder = () => {
+    setNewFolderName('')
+    setShowCreateFolder(false)
+  }
+
   const handleCreateFile = () => {
-    if (newFileName.trim()) {
-      onFileCreate(newFileName.trim())
-      setNewFileName('')
-      setShowCreateFile(false)
-    }
+    if (!newFileName.trim()) return
+    onFileCreate(newFileName.trim())
+    setNewFileName('')
+    setShowCreateFile(false)
   }
 
   const handleCreateFolder = () => {
-    if (newFolderName.trim()) {
-      onFolderCreate(newFolderName.trim())
-      setNewFolderName('')
-      setShowCreateFolder(false)
+    if (!newFolderName.trim()) return
+    onFolderCreate(newFolderName.trim())
+    setNewFolderName('')
+    setShowCreateFolder(false)
+  }
+
+  const startRename = (file: ProjectFile) => {
+    if (file.isReadonly) return
+    setRenamingId(file.id)
+    setRenameValue(file.name)
+  }
+
+  const cancelRename = () => {
+    setRenamingId(null)
+    setRenameValue('')
+  }
+
+  const commitRename = () => {
+    if (!renamingId) return
+    const nextName = renameValue.trim()
+    if (!nextName) {
+      cancelRename()
+      return
     }
+    onItemRename(renamingId, nextName)
+    cancelRename()
   }
 
   const renderFile = (file: ProjectFile, level: number = 0) => {
     const isActive = file.id === activeFileId
     const isFolder = file.type === 'folder'
     const isExpanded = expandedFolders.has(file.id)
+    const isRenaming = renamingId === file.id
     const children = filteredFiles.filter(
       (f) => f.path.startsWith(file.path + '/') && f.path.split('/').length === file.path.split('/').length + 1,
     )
@@ -83,6 +128,7 @@ export function FileExplorer({
         <div
           className={`file-item ${isActive ? 'active' : ''} ${isFolder ? 'folder' : ''}`}
           onClick={() => {
+            if (isRenaming) return
             if (isFolder) {
               toggleFolder(file.id)
             } else {
@@ -101,15 +147,52 @@ export function FileExplorer({
               getFileIcon(file.name)
             )}
           </span>
-          <span className="file-name">{file.name}</span>
-          {!isFolder && !file.isReadonly && (
+          {isRenaming ? (
+            <input
+              className="file-rename-input"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') commitRename()
+                if (e.key === 'Escape') cancelRename()
+              }}
+              onBlur={cancelRename}
+              autoFocus
+            />
+          ) : (
+            <span className="file-name" onDoubleClick={() => startRename(file)}>
+              {file.name}
+            </span>
+          )}
+          {!file.isReadonly && !isRenaming && (
+            <button
+              className="file-rename-btn"
+              onClick={(e) => {
+                e.stopPropagation()
+                startRename(file)
+              }}
+              title="Rename"
+            >
+              ✎
+            </button>
+          )}
+          {!file.isReadonly && !isRenaming && (
             <button
               className="file-delete-btn"
               onClick={(e) => {
                 e.stopPropagation()
-                if (confirm(`Delete ${file.name}?`)) {
-                  onFileDelete(file.id)
-                }
+                const previousActive = document.activeElement
+                const label = isFolder ? 'folder' : 'file'
+                const ok = confirm(`Delete ${label} ${file.name}?`)
+                restoreFocus(previousActive)
+                if (!ok) return
+                onFileDelete(file.id)
+                setExpandedFolders((prev) => {
+                  if (!prev.has(file.id)) return prev
+                  const next = new Set(prev)
+                  next.delete(file.id)
+                  return next
+                })
               }}
             >
               ×
@@ -171,8 +254,11 @@ export function FileExplorer({
             type="text"
             value={newFileName}
             onChange={(e) => setNewFileName(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleCreateFile()}
-            onBlur={handleCreateFile}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateFile()
+              if (e.key === 'Escape') cancelCreateFile()
+            }}
+            onBlur={cancelCreateFile}
             placeholder="File name..."
             autoFocus
           />
@@ -185,8 +271,11 @@ export function FileExplorer({
             type="text"
             value={newFolderName}
             onChange={(e) => setNewFolderName(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleCreateFolder()}
-            onBlur={handleCreateFolder}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleCreateFolder()
+              if (e.key === 'Escape') cancelCreateFolder()
+            }}
+            onBlur={cancelCreateFolder}
             placeholder="Folder name..."
             autoFocus
           />

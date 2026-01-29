@@ -135,6 +135,41 @@
   white-space: nowrap;
 }
 
+.file-rename-input {
+  flex: 1;
+  background: #202124;
+  border: 1px solid #3d3d3d;
+  border-radius: 4px;
+  padding: 0.25rem 0.4rem;
+  color: #fff;
+  font-size: 0.85rem;
+}
+
+.file-rename-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
+.file-rename-btn {
+  background: transparent;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 0.95rem;
+  padding: 0 0.35rem;
+  opacity: 0;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.file-item:hover .file-rename-btn {
+  opacity: 1;
+}
+
+.file-rename-btn:hover {
+  color: #b0b0b0;
+}
+
 .file-delete-btn {
   background: transparent;
   border: none;
