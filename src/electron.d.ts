@@ -4,6 +4,7 @@ declare global {
   interface Window {
     electronAPI?: {
       ping: () => Promise<string>
+      ensureWindowFocus: () => Promise<boolean>
       uploadCode: (payload: {
         token: string
         experimentId: string

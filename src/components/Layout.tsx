@@ -101,7 +101,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <span className="muted">{currentUser.id}</span>
           </div>
           <button onClick={handleLogout} className="logout-btn" title="Logout">
-            <span className="logout-icon" style={{marginLeft:"50px"}}>
+            <span className="logout-icon">
               <LogOut size={16} />
             </span>
             <span className="logout-text">Logout</span>

@@ -328,6 +328,7 @@ export function CodeEditor() {
       appendTerminal('Authentication token missing. Please log in again.', 'error')
       return
     }
+    const previousActiveElement = document.activeElement as HTMLElement | null
 
     setStatusMessage(isSubmit ? 'Submitting to server...' : 'Saving draft to server...')
     appendTerminal('Contacting backend...', 'info')
@@ -391,6 +392,14 @@ export function CodeEditor() {
       )
     } finally {
       setStatusMessage(null)
+      window.requestAnimationFrame(() => {
+        if (previousActiveElement && document.contains(previousActiveElement)) {
+          previousActiveElement.focus({ preventScroll: true })
+          return
+        }
+        const editor = document.querySelector<HTMLTextAreaElement>('.code-editor')
+        editor?.focus({ preventScroll: true })
+      })
     }
 
   }

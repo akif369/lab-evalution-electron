@@ -49,7 +49,9 @@ const createWindow = () => {
 
   if (isDev && process.env.VITE_DEV_SERVER_URL) {
     win.loadURL(process.env.VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools({ mode: 'detach' })
+    if (process.env.LEAP_OPEN_DEVTOOLS === 'true') {
+      win.webContents.openDevTools({ mode: 'right' })
+    }
   } else {
     const indexPath = pathToFileURL(
       path.join(__dirname, '../dist/index.html'),
@@ -80,6 +82,18 @@ app.on('window-all-closed', () => {
 })
 
 ipcMain.handle('ping', () => 'pong')
+
+ipcMain.handle('ensure-window-focus', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win) return false
+
+  if (!win.isFocused()) {
+    win.focus()
+  }
+
+  win.webContents.focus()
+  return true
+})
 
 ipcMain.handle('upload-code', async (_event, payload) => {
   const { token, experimentId, status, submitted, files } = payload || {}
