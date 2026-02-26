@@ -31,6 +31,12 @@
   gap: 1rem;
 }
 
+.teacher-form-grid {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1.5fr auto;
+  gap: 0.75rem;
+}
+
 .add-form input {
   flex: 1;
   padding: 0.75rem;
@@ -59,6 +65,25 @@
 
 .btn-primary:hover {
   background: #357abd;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 0.6rem 1rem;
+  background: #2d2f33;
+  color: #fff;
+  border: 1px solid #3f434a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-secondary:hover {
+  background: #3b3f46;
 }
 
 .teachers-grid {
@@ -97,6 +122,38 @@
   gap: 0.75rem;
 }
 
+.teacher-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.teacher-edit-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: #c8c8c8;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.teacher-edit-grid input {
+  width: 100%;
+  padding: 0.65rem 0.7rem;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 0.92rem;
+}
+
+.teacher-edit-grid input:focus {
+  outline: none;
+  border-color: #4a9eff;
+}
+
 .info-item {
   display: flex;
   justify-content: space-between;
@@ -123,6 +180,7 @@
   margin-top: 1rem;
   display: flex;
   justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .btn-danger {
@@ -145,4 +203,14 @@
   border-radius: 4px;
   font-size: 0.85rem;
   color: #b0b0b0;
+}
+
+@media (max-width: 900px) {
+  .teacher-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-actions {
+    flex-direction: column;
+  }
 }

@@ -184,6 +184,29 @@ export async function updateUser(
   return mapUser(response.user)
 }
 
+export async function changeMyPassword(
+  token: string,
+  payload: { currentPassword: string; newPassword: string },
+): Promise<void> {
+  await request<{ message: string }>('/users/me/password', {
+    method: 'PUT',
+    token,
+    body: JSON.stringify(payload),
+  })
+}
+
+export async function changeUserPassword(
+  token: string,
+  userId: string,
+  payload: { newPassword: string },
+): Promise<void> {
+  await request<{ message: string }>(`/users/${userId}/password`, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function deleteUser(token: string, userId: string): Promise<void> {
   await request<{ message: string }>(`/users/${userId}`, {
     method: 'DELETE',
