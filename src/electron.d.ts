@@ -11,6 +11,7 @@ declare global {
         status: 'draft' | 'submitted'
         submitted: boolean
         files?: Array<{ id: string; name: string; content: string; type: 'file' | 'folder'; path: string; isReadonly?: boolean }>
+        executionResult?: { command?: string; stdout?: string; stderr?: string; exitCode?: number | null }
       }) => Promise<{
         ok: boolean
         receivedAt: number
@@ -20,6 +21,8 @@ declare global {
           experimentId: string
           status: 'draft' | 'submitted' | 'validated'
           score?: number | null
+          submittedAt?: string | null
+          aiEvaluation?: Record<string, unknown> | null
           lastSaved: string
           feedback?: string
         }

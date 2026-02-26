@@ -51,15 +51,25 @@ const mapExperiment = (raw: Record<string, unknown>): Experiment => ({
   expectedOutput: String(raw.expectedOutput ?? ''),
   hints: Array.isArray(raw.hints) ? raw.hints.map(String) : [],
   helperLinks: Array.isArray(raw.helperLinks) ? raw.helperLinks.map(String) : undefined,
+  dueAt: raw.dueAt ? String(raw.dueAt) : undefined,
+  latePenaltyPerDay: typeof raw.latePenaltyPerDay === 'number' ? raw.latePenaltyPerDay : undefined,
 })
+
+const normalizeScore = (value: unknown): number | null => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return null
+  const adjusted = value > 10 ? value / 10 : value
+  return Math.round(adjusted * 10) / 10
+}
 
 const mapSubmission = (raw: Record<string, unknown>): Submission => ({
   id: String(raw.id ?? raw._id ?? ''),
   studentId: String(raw.studentId ?? ''),
   experimentId: String(raw.experimentId ?? ''),
   status: (raw.status as Submission['status']) || 'draft',
-  score: typeof raw.score === 'number' ? raw.score : null,
+  score: normalizeScore(raw.score),
   feedback: raw.feedback ? String(raw.feedback) : undefined,
+  submittedAt: raw.submittedAt ? String(raw.submittedAt) : null,
+  aiEvaluation: raw.aiEvaluation && typeof raw.aiEvaluation === 'object' ? (raw.aiEvaluation as Submission['aiEvaluation']) : null,
   lastSaved: String(raw.lastSaved ?? new Date().toISOString()),
 })
 
@@ -241,6 +251,8 @@ export async function createExperiment(
     expectedOutput: string
     hints: string[]
     helperLinks?: string[]
+    dueAt?: string
+    latePenaltyPerDay?: number
   },
 ): Promise<Experiment> {
   const response = await request<{ problem: Record<string, unknown> }>('/problems', {
@@ -260,6 +272,8 @@ export async function updateExperiment(
     expectedOutput: string
     hints: string[]
     helperLinks: string[]
+    dueAt: string
+    latePenaltyPerDay: number
   }>,
 ): Promise<Experiment> {
   const response = await request<{ problem: Record<string, unknown> }>(`/problems/${experimentId}`, {
@@ -283,6 +297,12 @@ export async function upsertSubmission(
     experimentId: string
     status: 'draft' | 'submitted'
     files: ProjectFile[]
+    executionResult?: {
+      command?: string
+      stdout?: string
+      stderr?: string
+      exitCode?: number | null
+    }
   },
 ): Promise<Submission> {
   const response = await request<ApiSubmissionResponse>('/submissions', {

@@ -117,8 +117,8 @@ export function GradeSubmission() {
     }
 
     const n = score.trim() === '' ? NaN : Number(score)
-    if (!Number.isFinite(n) || n < 0 || n > 100) {
-      alert('Score must be a number between 0 and 100')
+    if (!Number.isFinite(n) || n < 0 || n > 10) {
+      alert('Score must be a number between 0 and 10')
       return
     }
 
@@ -193,8 +193,8 @@ export function GradeSubmission() {
           </div>
 
           <div className="form-group">
-            <label>Score (0-100)</label>
-            <input value={score} onChange={(e) => setScore(e.target.value)} placeholder="e.g. 92" />
+            <label>Score (0-10)</label>
+            <input value={score} onChange={(e) => setScore(e.target.value)} placeholder="e.g. 8.5" />
           </div>
 
           <div className="form-group">

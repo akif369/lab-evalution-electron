@@ -6,6 +6,18 @@ import type { Experiment } from '../types'
 import { deleteExperiment, isApiError, updateExperiment } from '../api/client'
 import './EditExperiment.css'
 
+const toDateTimeLocal = (iso?: string) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  return `${year}-${month}-${day}T${hours}:${minutes}`
+}
+
 export function EditExperiment() {
   const { labId, experimentId } = useParams<{ labId: string; experimentId: string }>()
   const { currentUser, authToken, data, setData } = useApp()
@@ -20,6 +32,10 @@ export function EditExperiment() {
   const [title, setTitle] = useState(() => experiment?.title || '')
   const [description, setDescription] = useState(() => experiment?.description || '')
   const [expectedOutput, setExpectedOutput] = useState(() => experiment?.expectedOutput || '')
+  const [dueAt, setDueAt] = useState(() => toDateTimeLocal(experiment?.dueAt))
+  const [latePenaltyPerDay, setLatePenaltyPerDay] = useState(() =>
+    experiment?.latePenaltyPerDay !== undefined ? String(experiment.latePenaltyPerDay) : '0.5',
+  )
   const [hints, setHints] = useState<string[]>(() => (experiment?.hints?.length ? experiment.hints : ['']))
   const [helperLinks, setHelperLinks] = useState<string[]>(() =>
     experiment?.helperLinks?.length ? experiment.helperLinks : [''],
@@ -73,8 +89,13 @@ export function EditExperiment() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!title.trim() || !description.trim() || !expectedOutput.trim()) {
+    if (!title.trim() || !description.trim() || !expectedOutput.trim() || !dueAt.trim()) {
       alert('Please fill in all required fields')
+      return
+    }
+    const penalty = Number(latePenaltyPerDay)
+    if (!Number.isFinite(penalty) || penalty < 0 || penalty > 10) {
+      alert('Late penalty per day must be between 0 and 10')
       return
     }
     if (!authToken) {
@@ -87,6 +108,8 @@ export function EditExperiment() {
         title: title.trim(),
         description: description.trim(),
         expectedOutput: expectedOutput.trim(),
+        dueAt: new Date(dueAt).toISOString(),
+        latePenaltyPerDay: penalty,
         hints: hints.map((h) => h.trim()).filter(Boolean),
         helperLinks: helperLinks.map((l) => l.trim()).filter(Boolean),
       })
@@ -172,6 +195,27 @@ export function EditExperiment() {
           <label>
             Expected Output <span className="required">*</span>
             <input value={expectedOutput} onChange={(e) => setExpectedOutput(e.target.value)} required />
+          </label>
+        </div>
+
+        <div className="form-section">
+          <label>
+            Due Date & Time <span className="required">*</span>
+            <input type="datetime-local" value={dueAt} onChange={(e) => setDueAt(e.target.value)} required />
+          </label>
+        </div>
+
+        <div className="form-section">
+          <label>
+            Late Penalty Per Day (marks out of 10)
+            <input
+              type="number"
+              min="0"
+              max="10"
+              step="0.1"
+              value={latePenaltyPerDay}
+              onChange={(e) => setLatePenaltyPerDay(e.target.value)}
+            />
           </label>
         </div>
 

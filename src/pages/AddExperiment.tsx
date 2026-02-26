@@ -12,6 +12,8 @@ export function AddExperiment() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [expectedOutput, setExpectedOutput] = useState('')
+  const [dueAt, setDueAt] = useState('')
+  const [latePenaltyPerDay, setLatePenaltyPerDay] = useState('0.5')
   const [hints, setHints] = useState<string[]>([''])
   const [helperLinks, setHelperLinks] = useState<string[]>([''])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -44,8 +46,13 @@ export function AddExperiment() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!labId || !title || !description || !expectedOutput) {
+    if (!labId || !title || !description || !expectedOutput || !dueAt) {
       alert('Please fill in all required fields')
+      return
+    }
+    const penalty = Number(latePenaltyPerDay)
+    if (!Number.isFinite(penalty) || penalty < 0 || penalty > 10) {
+      alert('Late penalty per day must be between 0 and 10')
       return
     }
     if (!authToken) {
@@ -60,6 +67,8 @@ export function AddExperiment() {
         title: title.trim(),
         description: description.trim(),
         expectedOutput: expectedOutput.trim(),
+        dueAt: new Date(dueAt).toISOString(),
+        latePenaltyPerDay: penalty,
         hints: hints.filter((h) => h.trim() !== ''),
         helperLinks: helperLinks.filter((l) => l.trim() !== ''),
       })
@@ -138,6 +147,32 @@ export function AddExperiment() {
               onChange={(e) => setExpectedOutput(e.target.value)}
               placeholder="e.g., Average waiting time and turnaround time"
               required
+            />
+          </label>
+        </div>
+
+        <div className="form-section">
+          <label>
+            Due Date & Time <span className="required">*</span>
+            <input
+              type="datetime-local"
+              value={dueAt}
+              onChange={(e) => setDueAt(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+
+        <div className="form-section">
+          <label>
+            Late Penalty Per Day (marks out of 10)
+            <input
+              type="number"
+              min="0"
+              max="10"
+              step="0.1"
+              value={latePenaltyPerDay}
+              onChange={(e) => setLatePenaltyPerDay(e.target.value)}
             />
           </label>
         </div>

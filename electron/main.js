@@ -96,7 +96,7 @@ ipcMain.handle('ensure-window-focus', (event) => {
 })
 
 ipcMain.handle('upload-code', async (_event, payload) => {
-  const { token, experimentId, status, submitted, files } = payload || {}
+  const { token, experimentId, status, submitted, files, executionResult } = payload || {}
   if (!token) {
     throw new Error('Missing auth token')
   }
@@ -121,19 +121,8 @@ ipcMain.handle('upload-code', async (_event, payload) => {
     experimentId,
     status: status || (submitted ? 'submitted' : 'draft'),
     files: normalizedFiles,
+    executionResult,
   })
-
-  if (submitted && process.env.LEAP_ENABLE_GRADE_RUN === 'true') {
-    try {
-      await backendRequest('/grade/run', token, {
-        experimentId,
-        language: 'js',
-        files: normalizedFiles,
-      })
-    } catch (error) {
-      console.warn('Optional auto-grade run failed:', error)
-    }
-  }
 
   return {
     ok: true,

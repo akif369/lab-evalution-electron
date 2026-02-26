@@ -28,6 +28,8 @@ export type Experiment = {
   expectedOutput: string
   hints: string[]
   helperLinks?: string[]
+  dueAt?: string
+  latePenaltyPerDay?: number
 }
 
 export type Lab = {
@@ -51,6 +53,22 @@ export type Submission = {
   status: 'draft' | 'submitted' | 'validated'
   score?: number | null
   feedback?: string
+  submittedAt?: string | null
+  aiEvaluation?: {
+    provider?: string
+    model?: string
+    codeQualityScore?: number
+    outputMatchScore?: number
+    rawScore?: number
+    latePenalty?: number
+    finalScore?: number
+    daysLate?: number
+    dueAt?: string | null
+    submittedAt?: string | null
+    reasoning?: string
+    outputVerification?: string
+    issues?: string[]
+  } | null
   lastSaved: string
 }
 

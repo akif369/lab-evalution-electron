@@ -21,12 +21,21 @@ export function CodeEditor() {
   const selectedExperiment = useMemo(() => {
     return selectedLab?.experiments.find((exp) => exp.id === experimentId)
   }, [selectedLab, experimentId])
+  const dueAtLabel = selectedExperiment?.dueAt
+    ? new Date(selectedExperiment.dueAt).toLocaleString()
+    : null
 
   const [files, setFiles] = useState<ProjectFile[]>([])
   const [activeFileId, setActiveFileId] = useState<string | null>(null)
   const [terminal, setTerminal] = useState<TerminalEntry[]>([])
   const [editorWarning, setEditorWarning] = useState<string | null>(null)
   const [statusMessage, setStatusMessage] = useState<string | null>(null)
+  const [latestExecutionResult, setLatestExecutionResult] = useState<{
+    command?: string
+    stdout?: string
+    stderr?: string
+    exitCode?: number | null
+  } | null>(null)
 
   // Initialize files for this experiment
   useEffect(() => {
@@ -293,6 +302,12 @@ export function CodeEditor() {
         files: filesForTerminal.filter((f) => f.type === 'file'),
         sessionId,
       })
+      setLatestExecutionResult({
+        command: cmd,
+        stdout: result.stdout,
+        stderr: result.stderr,
+        exitCode: result.code,
+      })
 
       // Show stdout
       if (result.stdout && result.stdout.trim()) {
@@ -344,6 +359,7 @@ export function CodeEditor() {
           status: isSubmit ? 'submitted' : 'draft',
           submitted: isSubmit,
           files: submissionFiles,
+          executionResult: latestExecutionResult ?? undefined,
         })
 
         savedSubmission = response.submission
@@ -352,6 +368,7 @@ export function CodeEditor() {
           experimentId: selectedExperiment.id,
           status: isSubmit ? 'submitted' : 'draft',
           files: submissionFiles,
+          executionResult: latestExecutionResult ?? undefined,
         })
       }
 
@@ -378,7 +395,9 @@ export function CodeEditor() {
       })
 
       appendTerminal(
-        isSubmit ? 'Submitted successfully. Awaiting validation.' : 'Draft saved to backend.',
+        isSubmit
+          ? `Submitted successfully. AI score: ${finalSubmission.score ?? '-'}/10`
+          : 'Draft saved to backend.',
         'success',
       )
     } catch (error) {
@@ -427,6 +446,14 @@ export function CodeEditor() {
               <p className="muted small">{selectedExperiment.expectedOutput}</p>
             </div>
 
+            {dueAtLabel && (
+              <div className="sidebar-section">
+                <h4>Deadline</h4>
+                <p className="muted small">Due: {dueAtLabel}</p>
+                <p className="muted small">Late penalty: {selectedExperiment.latePenaltyPerDay ?? 0.5} marks/day</p>
+              </div>
+            )}
+
             <div className="sidebar-section">
               <h4>Hints & Helpers</h4>
               <ul className="hints-list">
@@ -452,9 +479,10 @@ export function CodeEditor() {
                 <div className={`status-badge ${submission.status}`}>
                   {submission.status}
                 </div>
-                {submission.score !== undefined && (
-                  <div className="score">Score: {submission.score}/100</div>
+                {submission.score !== undefined && submission.score !== null && (
+                  <div className="score">Score: {submission.score}/10</div>
                 )}
+                {submission.feedback && <div className="muted small">{submission.feedback}</div>}
                 <div className="muted small">Last saved: {submission.lastSaved}</div>
               </div>
             )}
