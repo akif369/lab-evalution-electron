@@ -5,12 +5,24 @@ declare global {
     electronAPI?: {
       ping: () => Promise<string>
       uploadCode: (payload: {
-        studentId: string
+        token: string
         experimentId: string
-        code: string
+        status: 'draft' | 'submitted'
         submitted: boolean
-        files?: Array<{ name: string; content: string; type: string }>
-      }) => Promise<{ ok: boolean; receivedAt: number }>
+        files?: Array<{ id: string; name: string; content: string; type: 'file' | 'folder'; path: string; isReadonly?: boolean }>
+      }) => Promise<{
+        ok: boolean
+        receivedAt: number
+        submission?: {
+          id: string
+          studentId: string
+          experimentId: string
+          status: 'draft' | 'submitted' | 'validated'
+          score?: number | null
+          lastSaved: string
+          feedback?: string
+        }
+      }>
       executeCommand: (payload: {
         command: string
         cwd?: string

@@ -2,35 +2,35 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import type { UserRole } from '../types'
+import { isApiError, login } from '../api/client'
 import './Login.css'
 
 export function Login() {
-  const [id, setId] = useState('')
+  const [idOrUsername, setIdOrUsername] = useState('')
   const [password, setPassword] = useState('')
   const [role, setRole] = useState<UserRole>('student')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { setCurrentUser, data } = useApp()
+  const { setAuthSession } = useApp()
   const navigate = useNavigate()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    setIsSubmitting(true)
 
-    const found = data.users.find(
-      (u) =>
-        u.id.toLowerCase() === id.toLowerCase() &&
-        u.password === password &&
-        u.role === role,
-    )
-
-    if (!found) {
-      setError('Invalid credentials or role')
-      return
+    try {
+      const result = await login({ idOrUsername, password, role })
+      setAuthSession(result)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Login failed')
+    } finally {
+      setIsSubmitting(false)
     }
-
-    setCurrentUser(found)
-    navigate('/dashboard')
   }
+
+  const canSubmit = !isSubmitting && idOrUsername.trim() !== '' && password.trim() !== ''
 
   return (
     <div className="login-page">
@@ -41,12 +41,12 @@ export function Login() {
         </div>
         <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
-            <label>User ID</label>
+            <label>Email or User ID</label>
             <input
               type="text"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              placeholder="e.g., stu-01, t-01"
+              value={idOrUsername}
+              onChange={(e) => setIdOrUsername(e.target.value)}
+              placeholder="e.g., student@example.com"
               required
             />
           </div>
@@ -70,19 +70,10 @@ export function Login() {
             </select>
           </div>
           {error && <div className="error-message">{error}</div>}
-          <button type="submit" className="login-btn">
-            Login
+          <button type="submit" className="login-btn" disabled={!canSubmit}>
+            {isSubmitting ? 'Signing in...' : 'Login'}
           </button>
         </form>
-        <div className="login-hint">
-          <p className="muted">Demo accounts:</p>
-          <ul>
-            <li>Student: stu-01 / student</li>
-            <li>Teacher: t-01 / teacher</li>
-            <li>HOD: hod-01 / hod</li>
-            <li>Admin: admin-01 / admin</li>
-          </ul>
-        </div>
       </div>
     </div>
   )

@@ -4,7 +4,10 @@ export type User = {
   id: string
   name: string
   role: UserRole
-  password: string
+  email?: string
+  password?: string
+  rollNo?: string
+  batch?: string
   courseIds?: string[]
   labIds?: string[]
   year?: string
@@ -46,7 +49,7 @@ export type Submission = {
   studentId: string
   experimentId: string
   status: 'draft' | 'submitted' | 'validated'
-  score?: number
+  score?: number | null
   feedback?: string
   lastSaved: string
 }

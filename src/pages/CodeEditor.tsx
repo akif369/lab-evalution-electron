@@ -2,15 +2,16 @@ import { useState, useEffect, useMemo, type JSX } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { FileCode2, FileText, FileJson, File as FileIcon } from 'lucide-react'
 import { useApp } from '../context/AppContext'
-import { uid, nowStamp } from '../data'
+import { uid } from '../data'
 import { FileExplorer } from '../components/FileExplorer'
 import { Terminal } from '../components/Terminal'
-import type { TerminalEntry, ProjectFile } from '../types'
+import type { Submission, TerminalEntry, ProjectFile } from '../types'
+import { getMySubmission, isApiError, upsertSubmission } from '../api/client'
 import './CodeEditor.css'
 
 export function CodeEditor() {
   const { labId, experimentId } = useParams<{ labId: string; experimentId: string }>()
-  const { currentUser, data, setData } = useApp()
+  const { currentUser, authToken, data, setData } = useApp()
   const navigate = useNavigate()
 
   const selectedLab = useMemo(
@@ -29,36 +30,104 @@ export function CodeEditor() {
 
   // Initialize files for this experiment
   useEffect(() => {
-    if (!selectedExperiment || !currentUser) return
+    if (!selectedExperiment || !currentUser || !experimentId) return
 
-    const storageKey = `files_${currentUser.id}_${experimentId}`
-    const saved = localStorage.getItem(storageKey)
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        setFiles(parsed)
-        if (parsed.length > 0 && !activeFileId) {
-          const firstFile = parsed.find((f: ProjectFile) => f.type === 'file')
-          if (firstFile) setActiveFileId(firstFile.id)
-        }
-      } catch {
-        // Invalid saved data, use defaults
-      }
-    } else {
-      // Create default files
-      const defaultFiles: ProjectFile[] = [
-        {
-          id: uid('file'),
-          name: 'main.js',
-          content: '// Start coding your solution here...\n',
-          type: 'file',
-          path: 'main.js',
-        },
-      ]
-      setFiles(defaultFiles)
-      setActiveFileId(defaultFiles[0].id)
+    let isCancelled = false
+
+    const defaultFiles: ProjectFile[] = [
+      {
+        id: uid('file'),
+        name: 'main.js',
+        content: '// Start coding your solution here...\n',
+        type: 'file',
+        path: 'main.js',
+      },
+    ]
+
+    const applyFiles = (nextFiles: ProjectFile[]) => {
+      if (isCancelled) return
+      setFiles(nextFiles)
+      const firstFile = nextFiles.find((file) => file.type === 'file')
+      setActiveFileId(firstFile ? firstFile.id : null)
     }
-  }, [selectedExperiment, experimentId, currentUser])
+
+    const loadSubmission = async () => {
+      if (!authToken) {
+        const storageKey = `files_${currentUser.id}_${experimentId}`
+        const saved = localStorage.getItem(storageKey)
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved) as ProjectFile[]
+            applyFiles(parsed)
+            return
+          } catch {
+            // Fall through to default files
+          }
+        }
+        applyFiles(defaultFiles)
+        return
+      }
+
+      setStatusMessage('Loading your latest submission...')
+      try {
+        const response = await getMySubmission(authToken, selectedExperiment.id)
+        const backendSubmission = response.submission
+        if (backendSubmission) {
+          setData((prev) => {
+            const existing = prev.submissions.find((s) => s.id === backendSubmission.id)
+            return {
+              ...prev,
+              submissions: existing
+                ? prev.submissions.map((submission) =>
+                    submission.id === backendSubmission.id ? backendSubmission : submission,
+                  )
+                : [...prev.submissions, backendSubmission],
+              submissionFiles: {
+                ...prev.submissionFiles,
+                [backendSubmission.id]: response.files,
+              },
+            }
+          })
+        }
+
+        if (response.files.length > 0) {
+          const normalized = response.files.map((file) => ({
+            ...file,
+            id: file.id || uid('file'),
+            path: file.path || file.name,
+          }))
+          applyFiles(normalized)
+          return
+        }
+      } catch (error) {
+        appendTerminal(
+          isApiError(error) ? `Failed to load saved submission: ${error.message}` : 'Failed to load saved submission.',
+          'error',
+        )
+      } finally {
+        if (!isCancelled) setStatusMessage(null)
+      }
+
+      const storageKey = `files_${currentUser.id}_${experimentId}`
+      const saved = localStorage.getItem(storageKey)
+      if (saved) {
+        try {
+          applyFiles(JSON.parse(saved) as ProjectFile[])
+          return
+        } catch {
+          // Fall through to defaults
+        }
+      }
+
+      applyFiles(defaultFiles)
+    }
+
+    void loadSubmission()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [selectedExperiment, experimentId, currentUser, authToken, setData])
 
   // Save files to localStorage
   useEffect(() => {
@@ -255,75 +324,75 @@ export function CodeEditor() {
 
   const saveDraft = async (isSubmit: boolean) => {
     if (!currentUser || currentUser.role !== 'student' || !selectedExperiment) return
-
-    setStatusMessage(isSubmit ? 'Submitting to server...' : 'Saving draft to server...')
-    appendTerminal('Contacting backend (placeholder)...', 'info')
-
-    const allCode = files
-      .filter((f) => f.type === 'file')
-      .map((f) => `// ${f.name}\n${f.content}`)
-      .join('\n\n')
-
-    if (window.electronAPI?.uploadCode) {
-      await window.electronAPI.uploadCode({
-        studentId: currentUser.id,
-        experimentId: selectedExperiment.id,
-        code: allCode,
-        submitted: isSubmit,
-        files: files.filter((f) => f.type === 'file'),
-      })
+    if (!authToken) {
+      appendTerminal('Authentication token missing. Please log in again.', 'error')
+      return
     }
 
-    const submissionFiles = files.filter((f) => f.type === 'file')
+    setStatusMessage(isSubmit ? 'Submitting to server...' : 'Saving draft to server...')
+    appendTerminal('Contacting backend...', 'info')
 
-    setData((prev) => {
-      const existing = prev.submissions.find(
-        (s) => s.studentId === currentUser.id && s.experimentId === selectedExperiment.id,
-      )
-      if (existing) {
+    const submissionFiles = files.filter((f) => f.type === 'file')
+    let savedSubmission: Submission | undefined
+
+    try {
+      if (window.electronAPI?.uploadCode) {
+        const response = await window.electronAPI.uploadCode({
+          token: authToken,
+          experimentId: selectedExperiment.id,
+          status: isSubmit ? 'submitted' : 'draft',
+          submitted: isSubmit,
+          files: submissionFiles,
+        })
+
+        savedSubmission = response.submission
+      } else {
+        savedSubmission = await upsertSubmission(authToken, {
+          experimentId: selectedExperiment.id,
+          status: isSubmit ? 'submitted' : 'draft',
+          files: submissionFiles,
+        })
+      }
+
+      if (!savedSubmission) {
+        throw new Error('Submission response missing')
+      }
+      const finalSubmission = savedSubmission
+
+      setData((prev) => {
+        const existing = prev.submissions.find((submission) => submission.id === finalSubmission.id)
+
         return {
           ...prev,
-          submissions: prev.submissions.map((s) =>
-            s.id === existing.id
-              ? {
-                  ...s,
-                  status: isSubmit ? 'submitted' : 'draft',
-                  lastSaved: nowStamp(),
-                }
-              : s,
-          ),
+          submissions: existing
+            ? prev.submissions.map((submission) =>
+                submission.id === finalSubmission.id ? finalSubmission : submission,
+              )
+            : [...prev.submissions, finalSubmission],
           submissionFiles: {
             ...prev.submissionFiles,
-            [existing.id]: submissionFiles,
+            [finalSubmission.id]: submissionFiles,
           },
         }
-      }
+      })
 
-      const newId = uid('sub')
-      return {
-        ...prev,
-        submissions: [
-          ...prev.submissions,
-          {
-            id: newId,
-            studentId: currentUser.id,
-            experimentId: selectedExperiment.id,
-            status: isSubmit ? 'submitted' : 'draft',
-            lastSaved: nowStamp(),
-          },
-        ],
-        submissionFiles: {
-          ...prev.submissionFiles,
-          [newId]: submissionFiles,
-        },
-      }
-    })
+      appendTerminal(
+        isSubmit ? 'Submitted successfully. Awaiting validation.' : 'Draft saved to backend.',
+        'success',
+      )
+    } catch (error) {
+      appendTerminal(
+        isApiError(error)
+          ? `Save failed: ${error.message}`
+          : error instanceof Error
+            ? `Save failed: ${error.message}`
+            : 'Save failed due to an unexpected error.',
+        'error',
+      )
+    } finally {
+      setStatusMessage(null)
+    }
 
-    appendTerminal(
-      isSubmit ? 'Submitted. Backend will validate output.' : 'Draft saved (placeholder).',
-      'success',
-    )
-    setStatusMessage(null)
   }
 
   if (!selectedExperiment || !currentUser || currentUser.role !== 'student') {

@@ -3,11 +3,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { nowStamp } from '../data'
 import type { Experiment } from '../types'
+import { deleteExperiment, isApiError, updateExperiment } from '../api/client'
 import './EditExperiment.css'
 
 export function EditExperiment() {
   const { labId, experimentId } = useParams<{ labId: string; experimentId: string }>()
-  const { currentUser, data, setData } = useApp()
+  const { currentUser, authToken, data, setData } = useApp()
   const navigate = useNavigate()
 
   const lab = useMemo(() => data.labs.find((l) => l.id === labId) || null, [data.labs, labId])
@@ -69,62 +70,78 @@ export function EditExperiment() {
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!title.trim() || !description.trim() || !expectedOutput.trim()) {
       alert('Please fill in all required fields')
       return
     }
-
-    const updated: Experiment = {
-      id: experiment.id,
-      title: title.trim(),
-      description: description.trim(),
-      expectedOutput: expectedOutput.trim(),
-      hints: hints.map((h) => h.trim()).filter(Boolean),
-      helperLinks: helperLinks.map((l) => l.trim()).filter(Boolean),
+    if (!authToken) {
+      alert('Authentication required. Please login again.')
+      return
     }
 
-    setData((prev) => ({
-      ...prev,
-      labs: prev.labs.map((l) =>
-        l.id === lab.id
-          ? {
-              ...l,
-              experiments: l.experiments.map((e) => (e.id === experiment.id ? updated : e)),
-            }
-          : l,
-      ),
-    }))
+    try {
+      const updated: Experiment = await updateExperiment(authToken, experiment.id, {
+        title: title.trim(),
+        description: description.trim(),
+        expectedOutput: expectedOutput.trim(),
+        hints: hints.map((h) => h.trim()).filter(Boolean),
+        helperLinks: helperLinks.map((l) => l.trim()).filter(Boolean),
+      })
 
-    alert('Experiment updated')
-    navigate('/experiments')
-  }
-
-  const handleDelete = () => {
-    const ok = confirm(`Delete experiment ${experiment.title}? This will remove related submissions.`)
-    if (!ok) return
-
-    setData((prev) => {
-      const submissionsToDelete = prev.submissions.filter((s) => s.experimentId === experiment.id)
-      const nextSubmissionFiles = { ...prev.submissionFiles }
-      for (const s of submissionsToDelete) {
-        delete nextSubmissionFiles[s.id]
-      }
-
-      return {
+      setData((prev) => ({
         ...prev,
         labs: prev.labs.map((l) =>
-          l.id === lab.id ? { ...l, experiments: l.experiments.filter((e) => e.id !== experiment.id) } : l,
+          l.id === lab.id
+            ? {
+                ...l,
+                experiments: l.experiments.map((e) => (e.id === experiment.id ? updated : e)),
+              }
+            : l,
         ),
-        submissions: prev.submissions.filter((s) => s.experimentId !== experiment.id),
-        submissionFiles: nextSubmissionFiles,
-      }
-    })
+      }))
 
-    alert('Experiment deleted')
-    navigate('/experiments')
+      alert('Experiment updated')
+      navigate('/experiments')
+    } catch (error) {
+      alert(isApiError(error) ? error.message : 'Failed to update experiment')
+    }
+  }
+
+  const handleDelete = async () => {
+    const ok = confirm(`Delete experiment ${experiment.title}? This will remove related submissions.`)
+    if (!ok) return
+    if (!authToken) {
+      alert('Authentication required. Please login again.')
+      return
+    }
+
+    try {
+      await deleteExperiment(authToken, experiment.id)
+      setData((prev) => {
+        const submissionsToDelete = prev.submissions.filter((s) => s.experimentId === experiment.id)
+        const nextSubmissionFiles = { ...prev.submissionFiles }
+        for (const s of submissionsToDelete) {
+          delete nextSubmissionFiles[s.id]
+        }
+
+        return {
+          ...prev,
+          labs: prev.labs.map((l) =>
+            l.id === lab.id ? { ...l, experiments: l.experiments.filter((e) => e.id !== experiment.id) } : l,
+          ),
+          submissions: prev.submissions.filter((s) => s.experimentId !== experiment.id),
+          submissionFiles: nextSubmissionFiles,
+        }
+      })
+
+      alert('Experiment deleted')
+      navigate('/experiments')
+    } catch (error) {
+      alert(isApiError(error) ? error.message : 'Failed to delete experiment')
+    }
   }
 
   return (

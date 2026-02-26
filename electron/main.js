@@ -8,6 +8,31 @@ import fs from 'node:fs/promises'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const isDev = !!process.env.VITE_DEV_SERVER_URL
+const backendApiBaseUrl = (process.env.LEAP_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '')
+
+async function backendRequest(pathname, token, body) {
+  const response = await fetch(`${backendApiBaseUrl}${pathname}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  })
+
+  const isJson = response.headers.get('content-type')?.includes('application/json')
+  const payload = isJson ? await response.json() : null
+
+  if (!response.ok) {
+    const errorMessage =
+      payload && typeof payload === 'object' && 'message' in payload
+        ? payload.message
+        : `Request failed (${response.status})`
+    throw new Error(String(errorMessage))
+  }
+
+  return payload
+}
 
 const createWindow = () => {
   const win = new BrowserWindow({
@@ -57,9 +82,50 @@ app.on('window-all-closed', () => {
 ipcMain.handle('ping', () => 'pong')
 
 ipcMain.handle('upload-code', async (_event, payload) => {
-  // Placeholder stub for a future backend call
-  console.info('Code upload request received', payload)
-  return { ok: true, receivedAt: Date.now() }
+  const { token, experimentId, status, submitted, files } = payload || {}
+  if (!token) {
+    throw new Error('Missing auth token')
+  }
+  if (!experimentId) {
+    throw new Error('Missing experimentId')
+  }
+
+  const normalizedFiles = Array.isArray(files)
+    ? files
+        .filter((file) => file && file.type === 'file')
+        .map((file) => ({
+          id: file.id,
+          name: file.name,
+          content: file.content || '',
+          type: 'file',
+          path: file.path || file.name,
+          isReadonly: !!file.isReadonly,
+        }))
+    : []
+
+  const submissionResponse = await backendRequest('/submissions', token, {
+    experimentId,
+    status: status || (submitted ? 'submitted' : 'draft'),
+    files: normalizedFiles,
+  })
+
+  if (submitted && process.env.LEAP_ENABLE_GRADE_RUN === 'true') {
+    try {
+      await backendRequest('/grade/run', token, {
+        experimentId,
+        language: 'js',
+        files: normalizedFiles,
+      })
+    } catch (error) {
+      console.warn('Optional auto-grade run failed:', error)
+    }
+  }
+
+  return {
+    ok: true,
+    receivedAt: Date.now(),
+    submission: submissionResponse?.submission,
+  }
 })
 
 // Store temp directories per session to maintain state

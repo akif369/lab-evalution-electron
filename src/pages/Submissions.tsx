@@ -1,12 +1,24 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { getExperimentSubmissions, isApiError } from '../api/client'
 import './Submissions.css'
 
 export function Submissions() {
-  const { currentUser, data } = useApp()
+  const { currentUser, authToken, data } = useApp()
   const [selectedLabId, setSelectedLabId] = useState('')
   const [selectedExperimentId, setSelectedExperimentId] = useState('')
+  const [rows, setRows] = useState<Array<{
+    submission: {
+      id: string
+      status: 'draft' | 'submitted' | 'validated'
+      score?: number | null
+      lastSaved: string
+    }
+    studentName: string
+  }>>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   if (!currentUser || currentUser.role !== 'teacher') return null
 
@@ -17,21 +29,39 @@ export function Submissions() {
   const selectedExperiment =
     availableExperiments.find((e) => e.id === selectedExperimentId) || availableExperiments[0]
 
-  const rows = useMemo(() => {
-    if (!selectedExperiment) return []
+  useEffect(() => {
+    if (!authToken || !selectedExperiment) {
+      setRows([])
+      return
+    }
 
-    const submissions = data.submissions
-      .filter((s) => s.experimentId === selectedExperiment.id)
-      .sort((a, b) => (a.lastSaved < b.lastSaved ? 1 : -1))
+    let isCancelled = false
+    setLoading(true)
+    setError(null)
 
-    return submissions.map((s) => {
-      const student = data.users.find((u) => u.id === s.studentId)
-      return {
-        submission: s,
-        studentName: student?.name || s.studentId,
-      }
-    })
-  }, [data.submissions, data.users, selectedExperiment])
+    getExperimentSubmissions(authToken, selectedExperiment.id)
+      .then((response) => {
+        if (isCancelled) return
+        setRows(
+          response.map((row) => ({
+            submission: row.submission,
+            studentName: row.student.name || row.submission.studentId,
+          })),
+        )
+      })
+      .catch((err) => {
+        if (isCancelled) return
+        setRows([])
+        setError(isApiError(err) ? err.message : 'Failed to load submissions')
+      })
+      .finally(() => {
+        if (!isCancelled) setLoading(false)
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [authToken, selectedExperiment])
 
   return (
     <div className="submissions-page">
@@ -74,7 +104,15 @@ export function Submissions() {
       </div>
 
       <div className="submissions-table">
-        {rows.length === 0 ? (
+        {loading ? (
+          <div className="empty-state">
+            <p>Loading submissions...</p>
+          </div>
+        ) : error ? (
+          <div className="empty-state">
+            <p>{error}</p>
+          </div>
+        ) : rows.length === 0 ? (
           <div className="empty-state">
             <p>No submissions found</p>
           </div>

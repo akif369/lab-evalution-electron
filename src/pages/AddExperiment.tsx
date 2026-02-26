@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import { uid } from '../data'
 import type { Experiment } from '../types'
+import { createExperiment, isApiError } from '../api/client'
 import './AddExperiment.css'
 
 export function AddExperiment() {
-  const { currentUser, data, setData } = useApp()
+  const { currentUser, authToken, data, setData } = useApp()
   const navigate = useNavigate()
   const [labId, setLabId] = useState('')
   const [title, setTitle] = useState('')
@@ -14,6 +14,7 @@ export function AddExperiment() {
   const [expectedOutput, setExpectedOutput] = useState('')
   const [hints, setHints] = useState<string[]>([''])
   const [helperLinks, setHelperLinks] = useState<string[]>([''])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (!currentUser || currentUser.role !== 'teacher') {
     navigate('/dashboard')
@@ -40,34 +41,45 @@ export function AddExperiment() {
     setHelperLinks(newLinks)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (!labId || !title || !description || !expectedOutput) {
       alert('Please fill in all required fields')
       return
     }
-
-    const newExperiment: Experiment = {
-      id: uid('exp'),
-      title,
-      description,
-      expectedOutput,
-      hints: hints.filter((h) => h.trim() !== ''),
-      helperLinks: helperLinks.filter((l) => l.trim() !== ''),
+    if (!authToken) {
+      alert('Authentication required. Please login again.')
+      return
     }
 
-    setData((prev) => ({
-      ...prev,
-      labs: prev.labs.map((lab) =>
-        lab.id === labId
-          ? { ...lab, experiments: [...lab.experiments, newExperiment] }
-          : lab,
-      ),
-    }))
+    setIsSubmitting(true)
+    try {
+      const created: Experiment = await createExperiment(authToken, {
+        labId,
+        title: title.trim(),
+        description: description.trim(),
+        expectedOutput: expectedOutput.trim(),
+        hints: hints.filter((h) => h.trim() !== ''),
+        helperLinks: helperLinks.filter((l) => l.trim() !== ''),
+      })
 
-    alert('Experiment added successfully!')
-    navigate('/experiments')
+      setData((prev) => ({
+        ...prev,
+        labs: prev.labs.map((lab) =>
+          lab.id === labId
+            ? { ...lab, experiments: [...lab.experiments, created] }
+            : lab,
+        ),
+      }))
+
+      alert('Experiment added successfully!')
+      navigate('/experiments')
+    } catch (error) {
+      alert(isApiError(error) ? error.message : 'Failed to add experiment')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -194,8 +206,8 @@ export function AddExperiment() {
           <button type="button" onClick={() => navigate('/experiments')} className="btn-secondary">
             Cancel
           </button>
-          <button type="submit" className="btn-primary">
-            Create Experiment
+          <button type="submit" className="btn-primary" disabled={isSubmitting}>
+            {isSubmitting ? 'Creating...' : 'Create Experiment'}
           </button>
         </div>
       </form>

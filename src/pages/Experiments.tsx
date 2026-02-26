@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { deleteExperiment, isApiError } from '../api/client'
 import './Experiments.css'
 
 export function Experiments() {
-  const { currentUser, data } = useApp()
+  const { currentUser, authToken, data } = useApp()
   const { setData } = useApp()
   const navigate = useNavigate()
   const [selectedLabId, setSelectedLabId] = useState<string>('')
@@ -49,29 +50,39 @@ export function Experiments() {
     return sub?.status || null
   }
 
-  const handleDeleteExperiment = (labIdToDeleteFrom: string, experimentId: string, title: string) => {
+  const handleDeleteExperiment = async (labIdToDeleteFrom: string, experimentId: string, title: string) => {
     if (currentUser.role !== 'teacher') return
     const ok = confirm(`Delete experiment ${title}? This will remove related submissions.`)
     if (!ok) return
+    if (!authToken) {
+      alert('Authentication required. Please login again.')
+      return
+    }
 
-    setData((prev) => {
-      const submissionsToDelete = prev.submissions.filter((s) => s.experimentId === experimentId)
-      const nextSubmissionFiles = { ...prev.submissionFiles }
-      for (const s of submissionsToDelete) {
-        delete nextSubmissionFiles[s.id]
-      }
+    try {
+      await deleteExperiment(authToken, experimentId)
 
-      return {
-        ...prev,
-        labs: prev.labs.map((l) =>
-          l.id === labIdToDeleteFrom
-            ? { ...l, experiments: l.experiments.filter((e) => e.id !== experimentId) }
-            : l,
-        ),
-        submissions: prev.submissions.filter((s) => s.experimentId !== experimentId),
-        submissionFiles: nextSubmissionFiles,
-      }
-    })
+      setData((prev) => {
+        const submissionsToDelete = prev.submissions.filter((s) => s.experimentId === experimentId)
+        const nextSubmissionFiles = { ...prev.submissionFiles }
+        for (const s of submissionsToDelete) {
+          delete nextSubmissionFiles[s.id]
+        }
+
+        return {
+          ...prev,
+          labs: prev.labs.map((l) =>
+            l.id === labIdToDeleteFrom
+              ? { ...l, experiments: l.experiments.filter((e) => e.id !== experimentId) }
+              : l,
+          ),
+          submissions: prev.submissions.filter((s) => s.experimentId !== experimentId),
+          submissionFiles: nextSubmissionFiles,
+        }
+      })
+    } catch (error) {
+      alert(isApiError(error) ? error.message : 'Failed to delete experiment')
+    }
   }
 
   return (
