@@ -67,7 +67,15 @@ export type Submission = {
     submittedAt?: string | null
     reasoning?: string
     outputVerification?: string
+    outputMatched?: boolean
+    mistakeFlags?: string[]
+    suspectedCheating?: boolean
+    cheatingReason?: string
     issues?: string[]
+    teacherOverride?: boolean
+    teacherOverrideBy?: string
+    teacherOverrideAt?: string | null
+    teacherOverrideScore?: number | null
   } | null
   lastSaved: string
 }

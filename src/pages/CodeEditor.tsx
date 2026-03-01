@@ -396,7 +396,7 @@ export function CodeEditor() {
 
       appendTerminal(
         isSubmit
-          ? `Submitted successfully. AI score: ${finalSubmission.score ?? '-'}/10`
+          ? `Submitted and auto-validated by AI. Score: ${finalSubmission.score ?? '-'}/10`
           : 'Draft saved to backend.',
         'success',
       )

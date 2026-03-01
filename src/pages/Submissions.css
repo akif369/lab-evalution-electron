@@ -37,7 +37,17 @@
   font-size: 1rem;
 }
 
-.submissions-page select:focus {
+.submissions-page input {
+  padding: 0.75rem;
+  background: #252525;
+  border: 1px solid #333;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.submissions-page select:focus,
+.submissions-page input:focus {
   outline: none;
   border-color: #4a9eff;
 }
@@ -75,6 +85,32 @@
   text-align: right;
 }
 
+.risk-chip,
+.warn-chip,
+.ok-chip {
+  display: inline-block;
+  padding: 0.22rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.risk-chip {
+  background: #4a1616;
+  color: #ffb4b4;
+}
+
+.warn-chip {
+  background: #4a3914;
+  color: #ffd89e;
+}
+
+.ok-chip {
+  background: #12472d;
+  color: #b8f3c9;
+}
+
 .btn-primary {
   padding: 0.5rem 0.9rem;
   background: #4a9eff;
@@ -102,4 +138,18 @@
 
 .small {
   font-size: 0.85rem;
+}
+
+@media (max-width: 860px) {
+  .submissions-page {
+    padding: 1rem;
+  }
+
+  .submissions-table {
+    overflow-x: auto;
+  }
+
+  .submissions-table table {
+    min-width: 760px;
+  }
 }

@@ -383,6 +383,39 @@ export async function validateSubmission(
   return mapSubmission(response.submission as unknown as Record<string, unknown>)
 }
 
+export async function runAiGrade(
+  token: string,
+  payload: {
+    experimentId: string
+    files: ProjectFile[]
+    executionResult?: {
+      command?: string
+      stdout?: string
+      stderr?: string
+      exitCode?: number | null
+    }
+    expectedOutputOverride?: string
+    descriptionOverride?: string
+    submittedAt?: string
+  },
+): Promise<{
+  score: number
+  maxScore: number
+  feedback: string
+  aiEvaluation?: Submission['aiEvaluation']
+}> {
+  return request<{
+    score: number
+    maxScore: number
+    feedback: string
+    aiEvaluation?: Submission['aiEvaluation']
+  }>('/grade/run', {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+  })
+}
+
 export async function loadAppData(token: string): Promise<Pick<AppData, 'users' | 'courses' | 'labs' | 'teacherAssignments'>> {
   const [users, rawLabs] = await Promise.all([
     getUsers(token).catch(() => [] as User[]),

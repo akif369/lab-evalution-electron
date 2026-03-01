@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import type { Submission } from '../types'
 import { getExperimentSubmissions, isApiError } from '../api/client'
 import './Submissions.css'
 
@@ -8,13 +9,10 @@ export function Submissions() {
   const { currentUser, authToken, data } = useApp()
   const [selectedLabId, setSelectedLabId] = useState('')
   const [selectedExperimentId, setSelectedExperimentId] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'submitted' | 'validated'>('all')
+  const [search, setSearch] = useState('')
   const [rows, setRows] = useState<Array<{
-    submission: {
-      id: string
-      status: 'draft' | 'submitted' | 'validated'
-      score?: number | null
-      lastSaved: string
-    }
+    submission: Submission
     studentName: string
   }>>([])
   const [loading, setLoading] = useState(false)
@@ -63,11 +61,20 @@ export function Submissions() {
     }
   }, [authToken, selectedExperiment])
 
+  const filteredRows = rows.filter((row) => {
+    const statusOk = statusFilter === 'all' ? true : row.submission.status === statusFilter
+    const searchOk = search.trim()
+      ? row.studentName.toLowerCase().includes(search.toLowerCase()) ||
+        row.submission.id.toLowerCase().includes(search.toLowerCase())
+      : true
+    return statusOk && searchOk
+  })
+
   return (
     <div className="submissions-page">
       <div className="page-header">
         <h1>Submissions</h1>
-        <p className="muted">Review and validate student submissions</p>
+        <p className="muted">AI auto-validates submissions. Teacher reviews and confirms only when needed.</p>
       </div>
 
       <div className="filters">
@@ -101,6 +108,25 @@ export function Submissions() {
             ))}
           </select>
         </div>
+
+        <div className="filter-group">
+          <label>Status</label>
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}>
+            <option value="all">All</option>
+            <option value="draft">Draft</option>
+            <option value="submitted">Submitted</option>
+            <option value="validated">Validated</option>
+          </select>
+        </div>
+
+        <div className="filter-group">
+          <label>Search Student</label>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Type student name or submission id"
+          />
+        </div>
       </div>
 
       <div className="submissions-table">
@@ -112,7 +138,7 @@ export function Submissions() {
           <div className="empty-state">
             <p>{error}</p>
           </div>
-        ) : rows.length === 0 ? (
+        ) : filteredRows.length === 0 ? (
           <div className="empty-state">
             <p>No submissions found</p>
           </div>
@@ -123,22 +149,32 @@ export function Submissions() {
                 <th>Student</th>
                 <th>Status</th>
                 <th>Score</th>
+                <th>AI Flags</th>
                 <th>Last Saved</th>
                 <th />
               </tr>
             </thead>
             <tbody>
-              {rows.map((r) => (
+              {filteredRows.map((r) => (
                 <tr key={r.submission.id}>
                   <td>{r.studentName}</td>
                   <td>
                     <span className={`status-badge ${r.submission.status}`}>{r.submission.status}</span>
                   </td>
-                  <td>{r.submission.score ?? '-'}</td>
+                  <td>{r.submission.score ?? '-'}{r.submission.score !== null && r.submission.score !== undefined ? '/10' : ''}</td>
+                  <td>
+                    {r.submission.aiEvaluation?.suspectedCheating ? (
+                      <span className="risk-chip">High Risk</span>
+                    ) : r.submission.aiEvaluation?.mistakeFlags?.length ? (
+                      <span className="warn-chip">Needs Review</span>
+                    ) : (
+                      <span className="ok-chip">Clear</span>
+                    )}
+                  </td>
                   <td className="muted small">{r.submission.lastSaved}</td>
                   <td className="actions">
                     <Link to={`/grade/${r.submission.id}`} className="btn-primary">
-                      Review
+                      Review / Confirm
                     </Link>
                   </td>
                 </tr>
