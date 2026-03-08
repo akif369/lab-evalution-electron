@@ -103,3 +103,51 @@ export type ProjectFile = {
   path: string
   isReadonly?: boolean
 }
+
+export type VivaQuestionItem = {
+  question: string
+  options: string[]
+  correctOptionIndex: number
+  explanation: string
+  difficulty: 'easy' | 'medium' | 'hard'
+}
+
+export type VivaQuestionSet = {
+  id: string
+  experimentId: string
+  setNumber: number
+  questions: VivaQuestionItem[]
+  source: 'ai' | 'custom'
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type StudentProfile = {
+  student: User
+  stats: {
+    totalSubmissions: number
+    draft: number
+    submitted: number
+    validated: number
+    averageScore: number | null
+    bestScore: number | null
+    onTimeCount: number
+    lateCount: number
+  }
+  submissions: Array<{
+    id: string
+    experimentId: string
+    experimentTitle: string
+    labId: string
+    labName: string
+    labSubject?: string
+    status: Submission['status']
+    score: number | null
+    submittedAt: string | null
+    dueAt: string | null
+    onTime: boolean
+    lastSaved: string | null
+    feedback?: string
+  }>
+}

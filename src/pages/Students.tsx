@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { changeUserPassword, createUser, deleteUser, isApiError, updateUser } from '../api/client'
 import { looksLikeHeader, parseCsvText } from '../utils/csv'
@@ -593,6 +594,9 @@ export function Students() {
                 <button className="students-btn-primary" onClick={() => handleSaveStudent(student.id)} disabled={busy}>
                   {busyStudentId === student.id ? 'Saving...' : 'Save'}
                 </button>
+                <Link className="students-btn-secondary" to={`/students/${student.id}/profile`}>
+                  View Profile
+                </Link>
                 <button className="students-btn-secondary" onClick={() => handleResetPassword(student.id)} disabled={busy}>
                   Reset Password
                 </button>

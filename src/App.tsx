@@ -15,6 +15,8 @@ import { Submissions } from './pages/Submissions'
 import { GradeSubmission } from './pages/GradeSubmission'
 import { Users } from './pages/Users'
 import { Courses } from './pages/Courses'
+import { VivaQuestions } from './pages/VivaQuestions'
+import { StudentProfile } from './pages/StudentProfile'
 import './App.css'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -99,6 +101,16 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/students/:studentId/profile"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <StudentProfile />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/teachers"
         element={
           <ProtectedRoute>
@@ -154,6 +166,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <Layout>
               <Courses />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/viva-questions"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <VivaQuestions />
             </Layout>
           </ProtectedRoute>
         }

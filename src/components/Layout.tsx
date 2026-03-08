@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FileCheck,
   BookOpen,
+  CircleHelp,
   LogOut,
 } from 'lucide-react'
 import { useApp } from '../context/AppContext'
@@ -47,6 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: '/experiments', label: 'Experiments', icon: <FlaskConical size={18} /> },
     { path: '/students', label: 'Students', icon: <Users size={18} /> },
     { path: '/submissions', label: 'Submissions', icon: <FileCheck size={18} /> },
+    { path: '/viva-questions', label: 'Viva Questions', icon: <CircleHelp size={18} /> },
     { path: '/add-experiment', label: 'Add Experiment', icon: <PlusCircle size={18} /> },
     { path: '/profile', label: 'Profile', icon: <User size={18} /> },
   ]
@@ -56,6 +58,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: '/teachers', label: 'Teachers', icon: <GraduationCap size={18} /> },
     { path: '/assignments', label: 'Assignments', icon: <ClipboardList size={18} /> },
     { path: '/students', label: 'Students', icon: <Users size={18} /> },
+    { path: '/viva-questions', label: 'Viva Questions', icon: <CircleHelp size={18} /> },
     { path: '/profile', label: 'Profile', icon: <User size={18} /> },
   ]
 
@@ -63,6 +66,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { path: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { path: '/users', label: 'Users', icon: <Users size={18} /> },
     { path: '/courses', label: 'Courses', icon: <BookOpen size={18} /> },
+    { path: '/viva-questions', label: 'Viva Questions', icon: <CircleHelp size={18} /> },
     { path: '/profile', label: 'Profile', icon: <User size={18} /> },
   ]
 

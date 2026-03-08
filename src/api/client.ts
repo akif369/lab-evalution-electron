@@ -3,10 +3,13 @@ import type {
   Experiment,
   Lab,
   ProjectFile,
+  StudentProfile,
   Submission,
   TeacherAssignment,
   User,
   UserRole,
+  VivaQuestionItem,
+  VivaQuestionSet,
 } from '../types'
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api').replace(/\/$/, '')
@@ -71,6 +74,30 @@ const mapSubmission = (raw: Record<string, unknown>): Submission => ({
   submittedAt: raw.submittedAt ? String(raw.submittedAt) : null,
   aiEvaluation: raw.aiEvaluation && typeof raw.aiEvaluation === 'object' ? (raw.aiEvaluation as Submission['aiEvaluation']) : null,
   lastSaved: String(raw.lastSaved ?? new Date().toISOString()),
+})
+
+const mapVivaQuestionItem = (raw: Record<string, unknown>): VivaQuestionItem => ({
+  question: String(raw.question ?? ''),
+  options: Array.isArray(raw.options) ? raw.options.map(String) : [],
+  correctOptionIndex: Number(raw.correctOptionIndex ?? 0),
+  explanation: raw.explanation ? String(raw.explanation) : '',
+  difficulty:
+    raw.difficulty === 'easy' || raw.difficulty === 'hard' || raw.difficulty === 'medium'
+      ? (raw.difficulty as VivaQuestionItem['difficulty'])
+      : 'medium',
+})
+
+const mapVivaQuestionSet = (raw: Record<string, unknown>): VivaQuestionSet => ({
+  id: String(raw.id ?? raw._id ?? ''),
+  experimentId: String(raw.experimentId ?? ''),
+  setNumber: Number(raw.setNumber ?? 1),
+  questions: Array.isArray(raw.questions)
+    ? raw.questions.map((row) => mapVivaQuestionItem(row as Record<string, unknown>))
+    : [],
+  source: raw.source === 'ai' ? 'ai' : 'custom',
+  createdBy: String(raw.createdBy ?? ''),
+  createdAt: String(raw.createdAt ?? new Date().toISOString()),
+  updatedAt: String(raw.updatedAt ?? new Date().toISOString()),
 })
 
 const makeCourseId = (subject: string) =>
@@ -366,6 +393,122 @@ export async function getSubmissionById(
           name: String(response.student.name ?? ''),
         }
       : null,
+  }
+}
+
+export async function getVivaQuestions(token: string, experimentId: string): Promise<VivaQuestionSet[]> {
+  const response = await request<Array<Record<string, unknown>>>(
+    `/experiments/${encodeURIComponent(experimentId)}/viva-questions`,
+    { token },
+  )
+  return response.map(mapVivaQuestionSet)
+}
+
+export async function createVivaQuestion(
+  token: string,
+  experimentId: string,
+  payload: {
+    questions: VivaQuestionItem[]
+    setNumber?: number
+  },
+): Promise<VivaQuestionSet> {
+  const response = await request<{ set: Record<string, unknown> }>(
+    `/experiments/${encodeURIComponent(experimentId)}/viva-questions`,
+    {
+      method: 'POST',
+      token,
+      body: JSON.stringify(payload),
+    },
+  )
+  return mapVivaQuestionSet(response.set)
+}
+
+export async function generateVivaQuestions(
+  token: string,
+  experimentId: string,
+  payload?: { setCount?: number; topics?: string[] },
+): Promise<{ sets: VivaQuestionSet[]; meta?: { provider?: string; model?: string; fallbackUsed?: boolean; message?: string; topicsUsed?: string[] } }> {
+  const response = await request<{
+    sets: Array<Record<string, unknown>>
+    meta?: { provider?: string; model?: string; fallbackUsed?: boolean; message?: string; topicsUsed?: string[] }
+  }>(`/experiments/${encodeURIComponent(experimentId)}/viva-questions/generate`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload || {}),
+  })
+  return {
+    sets: Array.isArray(response.sets) ? response.sets.map(mapVivaQuestionSet) : [],
+    meta: response.meta,
+  }
+}
+
+export async function updateVivaQuestion(
+  token: string,
+  questionSetId: string,
+  payload: {
+    questions: VivaQuestionItem[]
+  },
+): Promise<VivaQuestionSet> {
+  const response = await request<{ set: Record<string, unknown> }>(`/viva-questions/${encodeURIComponent(questionSetId)}`, {
+    method: 'PUT',
+    token,
+    body: JSON.stringify(payload),
+  })
+  return mapVivaQuestionSet(response.set)
+}
+
+export async function deleteVivaQuestion(token: string, questionSetId: string): Promise<void> {
+  await request<{ message: string }>(`/viva-questions/${encodeURIComponent(questionSetId)}`, {
+    method: 'DELETE',
+    token,
+  })
+}
+
+export async function getStudentProfile(token: string, studentId: string): Promise<StudentProfile> {
+  const response = await request<{
+    student: Record<string, unknown>
+    stats: Record<string, unknown>
+    submissions: Array<Record<string, unknown>>
+  }>(`/users/${encodeURIComponent(studentId)}/profile`, { token })
+
+  return {
+    student: mapUser(response.student),
+    stats: {
+      totalSubmissions: Number(response.stats.totalSubmissions ?? 0),
+      draft: Number(response.stats.draft ?? 0),
+      submitted: Number(response.stats.submitted ?? 0),
+      validated: Number(response.stats.validated ?? 0),
+      averageScore:
+        typeof response.stats.averageScore === 'number' && Number.isFinite(response.stats.averageScore)
+          ? Math.round(response.stats.averageScore * 10) / 10
+          : null,
+      bestScore:
+        typeof response.stats.bestScore === 'number' && Number.isFinite(response.stats.bestScore)
+          ? Math.round(response.stats.bestScore * 10) / 10
+          : null,
+      onTimeCount: Number(response.stats.onTimeCount ?? 0),
+      lateCount: Number(response.stats.lateCount ?? 0),
+    },
+    submissions: Array.isArray(response.submissions)
+      ? response.submissions.map((row) => ({
+          id: String(row.id ?? row._id ?? ''),
+          experimentId: String(row.experimentId ?? ''),
+          experimentTitle: String(row.experimentTitle ?? ''),
+          labId: String(row.labId ?? ''),
+          labName: String(row.labName ?? ''),
+          labSubject: row.labSubject ? String(row.labSubject) : '',
+          status:
+            row.status === 'draft' || row.status === 'submitted' || row.status === 'validated'
+              ? row.status
+              : 'draft',
+          score: typeof row.score === 'number' && Number.isFinite(row.score) ? row.score : null,
+          submittedAt: row.submittedAt ? String(row.submittedAt) : null,
+          dueAt: row.dueAt ? String(row.dueAt) : null,
+          onTime: Boolean(row.onTime),
+          lastSaved: row.lastSaved ? String(row.lastSaved) : null,
+          feedback: row.feedback ? String(row.feedback) : '',
+        }))
+      : [],
   }
 }
 
