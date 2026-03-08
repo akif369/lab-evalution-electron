@@ -1,14 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
-import type { UserRole } from '../types'
 import { isApiError, login } from '../api/client'
 import './Login.css'
 
 export function Login() {
   const [idOrUsername, setIdOrUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState<UserRole>('student')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const { setAuthSession } = useApp()
@@ -20,7 +18,7 @@ export function Login() {
     setIsSubmitting(true)
 
     try {
-      const result = await login({ idOrUsername, password, role })
+      const result = await login({ idOrUsername, password })
       setAuthSession(result)
       navigate('/dashboard')
     } catch (err) {
@@ -59,15 +57,6 @@ export function Login() {
               placeholder="Enter password"
               required
             />
-          </div>
-          <div className="form-group">
-            <label>Role</label>
-            <select value={role} onChange={(e) => setRole(e.target.value as UserRole)}>
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-              <option value="hod">HOD</option>
-              <option value="admin">Admin</option>
-            </select>
           </div>
           {error && <div className="error-message">{error}</div>}
           <button type="submit" className="login-btn" disabled={!canSubmit}>

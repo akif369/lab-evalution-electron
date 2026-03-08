@@ -14,6 +14,8 @@ export function Submissions() {
   const [rows, setRows] = useState<Array<{
     submission: Submission
     studentName: string
+    studentId: string
+    studentRollNo: string
   }>>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -44,6 +46,8 @@ export function Submissions() {
           response.map((row) => ({
             submission: row.submission,
             studentName: row.student.name || row.submission.studentId,
+            studentId: row.student.id || row.submission.studentId,
+            studentRollNo: row.student.rollNo || '',
           })),
         )
       })
@@ -63,9 +67,12 @@ export function Submissions() {
 
   const filteredRows = rows.filter((row) => {
     const statusOk = statusFilter === 'all' ? true : row.submission.status === statusFilter
-    const searchOk = search.trim()
-      ? row.studentName.toLowerCase().includes(search.toLowerCase()) ||
-        row.submission.id.toLowerCase().includes(search.toLowerCase())
+    const query = search.trim().toLowerCase()
+    const searchOk = query
+      ? row.studentName.toLowerCase().includes(query) ||
+        row.studentRollNo.toLowerCase().includes(query) ||
+        row.studentId.toLowerCase().includes(query) ||
+        row.submission.id.toLowerCase().includes(query)
       : true
     return statusOk && searchOk
   })
@@ -124,7 +131,7 @@ export function Submissions() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Type student name or submission id"
+            placeholder="Type student name, student ID, or submission ID"
           />
         </div>
       </div>
@@ -157,7 +164,12 @@ export function Submissions() {
             <tbody>
               {filteredRows.map((r) => (
                 <tr key={r.submission.id}>
-                  <td>{r.studentName}</td>
+                  <td>
+                    <div>{r.studentName}</div>
+                    {(r.studentRollNo || r.studentId) && (
+                      <div className="muted small">ID: {r.studentRollNo || r.studentId}</div>
+                    )}
+                  </td>
                   <td>
                     <span className={`status-badge ${r.submission.status}`}>{r.submission.status}</span>
                   </td>

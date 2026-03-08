@@ -1,5 +1,6 @@
 .students-page {
   padding: 2rem;
+  min-width: 0;
 }
 
 .page-header {
@@ -28,6 +29,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .filter-group label {
@@ -42,6 +44,8 @@
   border-radius: 6px;
   color: #fff;
   font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .filter-group input {
@@ -51,6 +55,8 @@
   border-radius: 6px;
   color: #fff;
   font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .filter-group select:focus {
@@ -138,6 +144,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .students-onboard-group label {
@@ -155,6 +162,8 @@
   border-radius: 6px;
   color: #fff;
   font-size: 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .students-onboard-group input:focus,
@@ -278,7 +287,7 @@
 
 .students-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 1.5rem;
 }
 
@@ -287,6 +296,8 @@
   border-radius: 8px;
   padding: 1.5rem;
   border: 1px solid #333;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .student-card.selected {
@@ -346,6 +357,9 @@
 .student-id {
   color: #888;
   font-size: 0.85rem;
+  display: block;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .student-edit-grid {
@@ -363,6 +377,7 @@
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.4px;
+  min-width: 0;
 }
 
 .student-edit-grid input {
@@ -372,6 +387,9 @@
   border-radius: 6px;
   color: #fff;
   font-size: 0.9rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 .student-edit-grid input:focus {
@@ -383,6 +401,13 @@
   display: flex;
   gap: 0.6rem;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.student-actions .students-btn-primary,
+.student-actions .students-btn-secondary,
+.student-actions .students-btn-danger {
+  min-width: 0;
 }
 
 .student-stats {
@@ -443,6 +468,13 @@
   background: #252525;
   border-radius: 4px;
   font-size: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.submissions-list li > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .status-badge {
@@ -474,6 +506,19 @@
 }
 
 @media (max-width: 720px) {
+  .students-page {
+    padding: 1rem;
+  }
+
+  .students-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .student-card {
+    padding: 1rem;
+  }
+
   .student-edit-grid {
     grid-template-columns: 1fr;
   }

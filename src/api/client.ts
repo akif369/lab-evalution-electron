@@ -110,13 +110,11 @@ export const apiBaseUrl = API_BASE_URL
 export async function login(payload: {
   idOrUsername: string
   password: string
-  role?: UserRole
 }): Promise<{ token: string; user: User }> {
   const trimmed = payload.idOrUsername.trim()
   const requestBody: Record<string, unknown> = {
     idOrUsername: trimmed,
     password: payload.password,
-    role: payload.role,
   }
 
   if (trimmed.includes('@')) {
@@ -330,11 +328,11 @@ export async function getMySubmission(
 export async function getExperimentSubmissions(
   token: string,
   experimentId: string,
-): Promise<Array<{ submission: Submission; student: { id: string; name: string; email?: string } }>> {
+): Promise<Array<{ submission: Submission; student: { id: string; name: string; email?: string; rollNo?: string } }>> {
   const response = await request<
     Array<{
       submission: Record<string, unknown>
-      student: { id?: string; _id?: string; name?: string; email?: string }
+      student: { id?: string; _id?: string; name?: string; email?: string; rollNo?: string }
     }>
   >(`/experiments/${experimentId}/submissions`, { token })
 
@@ -344,6 +342,7 @@ export async function getExperimentSubmissions(
       id: String(row.student.id ?? row.student._id ?? ''),
       name: String(row.student.name ?? ''),
       email: row.student.email,
+      rollNo: row.student.rollNo ? String(row.student.rollNo) : undefined,
     },
   }))
 }
